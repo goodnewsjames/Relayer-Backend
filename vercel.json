@@ -1,14 +1,15 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs22.x"
+    "api/**/*.js": {
+      "runtime": "nodejs20.x"
     }
   },
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/claim.js"
+      "src": "/api/claim",
+      "dest": "/api/claim.js",
+      "methods": ["POST"]
     }
   ]
 }
