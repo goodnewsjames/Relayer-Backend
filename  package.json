@@ -1,0 +1,9 @@
+{
+  "name": "airdrop-relayer",
+  "version": "1.0.0",
+  "main": "api/claim.js",
+  "type": "module",
+  "dependencies": {
+    "ethers": "^6.7.0"
+  }
+}
