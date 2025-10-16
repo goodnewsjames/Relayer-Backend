@@ -8,43 +8,46 @@ export default async function handler(req, res) {
   try {
     const { address } = req.body;
     if (!address || !ethers.isAddress(address)) {
-      return res.status(400).json({ success: false, message: "Invalid address" });
+      return res.status(400).json({ success: false, message: "Invalid wallet address" });
     }
 
     // Load environment variables
     const {
       PRIVATE_KEY,
-      TOKEN_ADDRESS,
-      RPC_URL,
-      TOKEN_DECIMALS,
-      AMOUNT
+      CONTRACT_ADDRESS,
+      RPC_URL
     } = process.env;
 
+    if (!PRIVATE_KEY || !CONTRACT_ADDRESS || !RPC_URL) {
+      return res.status(500).json({ success: false, message: "Missing environment variables" });
+    }
+
+    // Connect to provider and wallet (this wallet will pay gas)
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
-    // ABI for ERC20 Transfer
-    const ERC20_ABI = [
-      "function transfer(address to, uint256 value) public returns (bool)"
+    // Your contract ABI (must include claim(address))
+    const CONTRACT_ABI = [
+      "function claim(address recipient) external"
     ];
 
-    const token = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, wallet);
-    const amountToSend = ethers.parseUnits(AMOUNT, TOKEN_DECIMALS);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, wallet);
 
-    console.log(`Sending ${AMOUNT} tokens to ${address}...`);
+    console.log(`Calling claim(${address})...`);
 
-    const tx = await token.transfer(address, amountToSend);
+    // Call the claim function and wait for confirmation
+    const tx = await contract.claim(address);
     await tx.wait();
 
-    console.log(`✅ Sent: ${tx.hash}`);
+    console.log(`✅ Claim successful: ${tx.hash}`);
 
     return res.status(200).json({
       success: true,
-      message: "Tokens sent successfully",
+      message: `Claim successful for ${address}`,
       txHash: tx.hash,
     });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error:", err);
     return res.status(500).json({ success: false, message: err.message });
   }
 }
